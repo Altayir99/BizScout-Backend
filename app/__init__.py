@@ -1,0 +1,1 @@
+# BizScout app package

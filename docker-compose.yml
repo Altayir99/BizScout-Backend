@@ -1,0 +1,42 @@
+services:
+  bizscout-api:
+    build: .
+    container_name: bizscout-api
+    ports:
+      - "8085:8000"          # ← safe port, does NOT conflict with Facturo/DocuAgent/Email Manager
+    env_file:
+      - .env
+    depends_on:
+      bizscout-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bizscout-network
+
+  bizscout-db:
+    image: postgres:16-alpine
+    container_name: bizscout-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-bizscout}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-bizscout_db}
+    volumes:
+      - bizscout_data:/var/lib/postgresql/data
+    # NOTE: No exposed port — internal Docker network only (security)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bizscout"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - bizscout-network
+
+volumes:
+  bizscout_data:
+    driver: local
+
+networks:
+  bizscout-network:
+    driver: bridge
+    # Isolated from Facturo, DocuAgent, Email Manager networks
