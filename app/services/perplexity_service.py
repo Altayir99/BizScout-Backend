@@ -39,6 +39,7 @@ async def search_perplexity(query: str, mode: str = "general") -> dict:
         ],
         "return_citations": True,
         "search_recency_filter": "month",
+        "return_images": False,
     }
 
     headers = {
@@ -47,8 +48,7 @@ async def search_perplexity(query: str, mode: str = "general") -> dict:
     }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        response = client.post(PERPLEXITY_URL, json=payload, headers=headers)
-        response = await response
+        response = await client.post(PERPLEXITY_URL, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
 
