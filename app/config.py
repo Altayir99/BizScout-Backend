@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # ignore DB_USER/DB_PASSWORD/DB_NAME (docker-compose only)
 
 
 @lru_cache
