@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Claude API (Anthropic)
     claude_api_key: str = "sk-ant-PLACEHOLDER"
     claude_model: str = "claude-sonnet-4-5"
-    claude_max_tokens: int = 2048
+    claude_max_tokens: int = 4096
 
     # Perplexity API
     perplexity_api_key: str = "pplx-PLACEHOLDER"
