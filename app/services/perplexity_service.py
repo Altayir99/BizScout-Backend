@@ -1,4 +1,5 @@
 import httpx
+from fastapi import HTTPException
 from app.config import get_settings
 
 settings = get_settings()
@@ -71,6 +72,7 @@ async def search_perplexity(query: str, mode: str = "general") -> dict:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ],
+        "max_tokens": 1500,
         "return_citations": True,
         "search_recency_filter": "month",
         "return_images": False,
@@ -81,10 +83,22 @@ async def search_perplexity(query: str, mode: str = "general") -> dict:
         "Content-Type": "application/json",
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(PERPLEXITY_URL, json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
+    timeout = httpx.Timeout(connect=10.0, read=60.0, write=30.0, pool=5.0)
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(PERPLEXITY_URL, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=504,
+            detail="Perplexity-Suche hat zu lange gedauert. Bitte erneut versuchen."
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Perplexity API-Fehler: {e.response.status_code}"
+        )
 
     content = data["choices"][0]["message"]["content"]
     citations = data.get("citations", [])
