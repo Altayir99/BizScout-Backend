@@ -1,4 +1,5 @@
 import anthropic
+from fastapi import HTTPException
 from app.config import get_settings
 
 settings = get_settings()
@@ -20,19 +21,55 @@ Unternehmen des Nutzers:
 Stil: Professionell, präzise, direkt. Antworte immer auf Deutsch, 
 außer der Nutzer schreibt auf Englisch oder Arabisch."""
 
+# ── Singleton client — reuse connection pool across requests ─────────────────
+_client: anthropic.AsyncAnthropic | None = None
+
+
+def _get_client() -> anthropic.AsyncAnthropic:
+    global _client
+    if _client is None:
+        _client = anthropic.AsyncAnthropic(api_key=settings.claude_api_key)
+    return _client
+
 
 async def ask_claude(messages: list[dict]) -> str:
     """
     messages: list of {"role": "user"|"assistant", "content": str}
     The system prompt is injected automatically.
     """
-    client = anthropic.AsyncAnthropic(api_key=settings.claude_api_key)
+    client = _get_client()
 
-    response = await client.messages.create(
-        model=settings.claude_model,
-        max_tokens=settings.claude_max_tokens,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    )
-
-    return response.content[0].text
+    try:
+        response = await client.messages.create(
+            model=settings.claude_model,
+            max_tokens=settings.claude_max_tokens,
+            system=SYSTEM_PROMPT,
+            messages=messages,
+            timeout=90.0,  # 90s timeout for complex analyses
+        )
+        return response.content[0].text
+    except anthropic.APITimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="Claude-API hat nicht rechtzeitig geantwortet. Bitte versuche es erneut.",
+        )
+    except anthropic.RateLimitError:
+        raise HTTPException(
+            status_code=429,
+            detail="Claude-API Rate Limit erreicht. Bitte warte kurz.",
+        )
+    except anthropic.AuthenticationError:
+        raise HTTPException(
+            status_code=401,
+            detail="Claude-API Authentifizierung fehlgeschlagen.",
+        )
+    except anthropic.APIError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Claude-API-Fehler: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unerwarteter Fehler bei Claude: {str(e)}",
+        )

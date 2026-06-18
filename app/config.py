@@ -1,8 +1,15 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # ignore DB_USER/DB_PASSWORD/DB_NAME (docker-compose only)
+    )
+
     # Database
     database_url: str = "postgresql+asyncpg://bizscout:bizscout@bizscout-db:5432/bizscout_db"
 
@@ -18,11 +25,6 @@ class Settings(BaseSettings):
     # App
     cors_origins: list[str] = ["*"]
     memory_window: int = 20  # last N messages passed to Claude as context
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # ignore DB_USER/DB_PASSWORD/DB_NAME (docker-compose only)
 
 
 @lru_cache

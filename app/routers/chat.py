@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,6 +27,9 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)):
     - Loads last 20 messages as context for Claude
     - Saves both turns to DB
     """
+    if not req.message.strip():
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein.")
+
     # 1. Get or create session
     session = await get_or_create_session(db, req.session_id)
 
@@ -36,8 +39,16 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)):
     # 3. Append new user message
     history.append({"role": "user", "content": req.message})
 
-    # 4. Call Claude
-    answer = await ask_claude(history)
+    # 4. Call Claude (HTTPException propagates with proper status codes)
+    try:
+        answer = await ask_claude(history)
+    except HTTPException:
+        raise  # Re-raise structured errors from claude_service
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat-Fehler: {str(e)}",
+        )
 
     # 5. Persist both turns
     await save_messages(db, session.id, req.message, answer)
