@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Perplexity API
     perplexity_api_key: str = "pplx-PLACEHOLDER"
-    perplexity_model: str = "llama-3.1-sonar-large-128k-online"
+    perplexity_model: str = "sonar-pro"
 
     # App
     cors_origins: list[str] = ["*"]

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.message import Message
 from app.models.session import ChatSession
 from app.config import get_settings
+from datetime import datetime
 
 settings = get_settings()
 
@@ -24,6 +25,14 @@ async def save_messages(db: AsyncSession, session_id: str, user_msg: str, assist
     """Persist both turns in one DB write."""
     db.add(Message(session_id=session_id, role="user", content=user_msg))
     db.add(Message(session_id=session_id, role="assistant", content=assistant_msg))
+    
+    session = await db.get(ChatSession, session_id)
+    if session:
+        if session.title == "Neue Unterhaltung":
+            clean = user_msg.strip().replace("\n", " ")
+            session.title = (clean[:57] + "…") if len(clean) > 60 else clean
+        session.updated_at = datetime.utcnow()
+    
     await db.commit()
 
 
