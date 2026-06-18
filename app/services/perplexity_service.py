@@ -72,7 +72,6 @@ async def search_perplexity(query: str, mode: str = "general") -> dict:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ],
-        "max_tokens": 1500,
         "return_citations": True,
         "search_recency_filter": "month",
         "return_images": False,
