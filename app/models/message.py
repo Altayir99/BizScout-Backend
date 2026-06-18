@@ -1,8 +1,13 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from sqlalchemy import String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+
+
+def _utcnow() -> datetime:
+    """Timezone-naive UTC now — compatible with SQLAlchemy DateTime columns."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Message(Base):
@@ -12,6 +17,6 @@ class Message(Base):
     session_id: Mapped[str] = mapped_column(String, ForeignKey("chat_sessions.id", ondelete="CASCADE"), index=True)
     role: Mapped[str] = mapped_column(String(16))   # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     session: Mapped["ChatSession"] = relationship("ChatSession", back_populates="messages")  # noqa: F821

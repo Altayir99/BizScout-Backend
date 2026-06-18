@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.message import Message
 from app.models.session import ChatSession
 from app.config import get_settings
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 settings = get_settings()
 
@@ -31,7 +31,7 @@ async def save_messages(db: AsyncSession, session_id: str, user_msg: str, assist
         if session.title == "Neue Unterhaltung":
             clean = user_msg.strip().replace("\n", " ")
             session.title = (clean[:57] + "…") if len(clean) > 60 else clean
-        session.updated_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(UTC).replace(tzinfo=None)
     
     await db.commit()
 
