@@ -34,36 +34,32 @@ async def research(req: ResearchRequest):
 
     # Step 2: Claude analyzes the results
     # Step 2: Claude analyzes the results with deep business intelligence
-    analysis_prompt = f"""Du hast folgende AKTUELLE Marktdaten zum Thema "{req.query}" (Modus: {req.mode}) recherchiert:
+    analysis_prompt = f"""Du hast folgende AKTUELLE Daten zum Thema "{req.query}" recherchiert:
 
 ---
 {search_result['answer']}
 ---
 
-Erstelle eine UMFASSENDE strategische Analyse für ein Gastronomie- und Zeitarbeitsunternehmen in Berlin.
-
-Deine Analyse MUSS enthalten:
+Erstelle eine UMFASSENDE strategische Analyse.
 
 ## 🎯 Executive Summary
 Die 3 wichtigsten Erkenntnisse in jeweils einem Satz.
 
 ## 📊 Detailanalyse
 Analysiere die Daten tiefgehend. Nenne KONKRETE Namen, Zahlen, Daten.
-Was bedeuten diese Informationen für unser Geschäft?
 
-## 💡 Geschäftschancen
-Identifiziere mindestens 3 konkrete, SOFORT umsetzbare Geschäftsmöglichkeiten.
-Für jede Chance: Was genau tun? Wen kontaktieren? Welchen Umsatz erwarten?
+## 💡 Chancen & Möglichkeiten
+Identifiziere mindestens 3 konkrete, umsetzbare Möglichkeiten.
 
-## ⚠️ Risiken & Wettbewerb
-Welche Risiken bestehen? Wer sind die Hauptkonkurrenten? Was machen sie besser?
+## ⚠️ Risiken & Herausforderungen
+Welche Risiken bestehen? Was sind die größten Hürden?
 
-## 🚀 Aktionsplan — Nächste 7 Tage
-Gib 3-5 konkrete, umsetzbare Schritte die DIESE WOCHE gemacht werden können.
-Jeder Schritt mit: Was? Wer? Bis wann?
+## 🚀 Aktionsplan
+Gib 3-5 konkrete, umsetzbare nächste Schritte.
 
-Sei wie ein McKinsey-Berater: datengestützt, präzise, handlungsorientiert.
-KEINE vagen Allgemeinheiten — nur Fakten und konkrete Empfehlungen."""
+Sei datengestützt, präzise, handlungsorientiert.
+KEINE vagen Allgemeinheiten — nur Fakten und konkrete Empfehlungen.
+Antworte in der Sprache der Anfrage."""
 
     try:
         ai_analysis = await ask_claude([{"role": "user", "content": analysis_prompt}])
